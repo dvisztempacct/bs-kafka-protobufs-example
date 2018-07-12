@@ -9,7 +9,11 @@ To use, first clone this repo, then:
 export KAFKA=10.101.0.1:20407
 export ZOOKEEPER=10.101.0.1:20406
 
+# Make sure [kafka-cli](https://github.com/shafreeck/kafka-cli) is on your PATH:
+PATH="$HOME/go/bin:$PATH"
+
 yarn # install depednencies
+yarn build # build
 yarn setup # create kafka topics for our widget factory
 yarn start # start WidgetCutter and WidgetPainter services
 pm2 log # watch the services do their work
@@ -43,4 +47,30 @@ From the cutter and painter services you should see something like this:
 1|WidgetPa | widget painted!
 1|WidgetPa | tx: <Painted Widget condition=adequate numTeeth=55 paintJob=greeN>
 1|WidgetPa | message send success: { 'painted-widget': { '0': 39 } }
+```
+
+## Troubleshooting
+
+If you're getting offsetOutOfRange error, you may have to manually reset your
+consumer group's offsets. Install the main Kafka distribution with `brew
+install kafka` and then launch `zkCli` and do something like this:
+
+```
+donviszneki@Lilys-MBP ~/sysalive-microservice/node_modules/kafka-node$ zkCli -server $ZOOKEEPER
+Connecting to 10.101.0.1:20406
+Welcome to ZooKeeper!
+JLine support is enabled
+[zk: 10.101.0.1:20406(CONNECTING) 0]
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+ls /
+[log_dir_event_notification, isr_change_notification, zookeeper, admin, consumers, cluster, config, latest_producer_id_block, controller, brokers, controller_epoch]
+[zk: 10.101.0.1:20406(CONNECTED) 1] ls /consumers/
+Command failed: java.lang.IllegalArgumentException: Path must not end with / character
+[zk: 10.101.0.1:20406(CONNECTED) 2] ls /consumers
+[kafka-node-group]
+[zk: 10.101.0.1:20406(CONNECTED) 3] ls /consumers/kafka-node-group
+[offset]
+[zk: 10.101.0.1:20406(CONNECTED) 4] l
 ```

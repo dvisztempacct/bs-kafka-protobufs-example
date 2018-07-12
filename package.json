@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "bs-grpc": "^0.9.3",
+    "bs-kafka": "^0.1.0",
     "grpc": "^1.13.0",
     "kafka-node": "^2.6.1",
     "reason-future": "^2.2.1"

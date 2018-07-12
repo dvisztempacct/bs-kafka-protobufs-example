@@ -1,0 +1,27 @@
+{
+  "name": "sysalive-microservice",
+  "version": "0.1.0",
+  "scripts": {
+    "clean": "bsb -clean-world",
+    "build": "bsb -make-world",
+    "watch": "bsb -make-world -w",
+    "setup": "./bin/kafka-setup",
+    "teardown": "./bin/kafka-teardown",
+    "start": "./bin/start",
+    "stop": "./bin/stop"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^3.1.5"
+  },
+  "dependencies": {
+    "bs-grpc": "^0.9.3",
+    "grpc": "^1.13.0",
+    "kafka-node": "^2.6.1",
+    "reason-future": "^2.2.1"
+  }
+}

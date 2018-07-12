@@ -1,0 +1,5 @@
+/src/protobufs.js
+.bsb.lock
+.merlin
+.vscode
+node_modules

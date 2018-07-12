@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ -z "$KAFKA" ] ; then
+  echo error: you must export KAFKA environment variable to this command > /dev/stderr
+  exit 1
+fi
+if [ -z "$ZOOKEEPER" ] ; then
+  echo error: you must export ZOOKEEPER environment variable to this command > /dev/stderr
+  exit 1
+fi
+if ! which kafka-cli ; then
+  echo error: kafka-cli must be on your PATH > /dev/stderr
+  exit 1
+fi
+
+TOPICS="blank-widget cut-widget painted-widget box-of-widget"
+echo "deleting topics: $TOPICS"
+if kafka-cli --brokers $KAFKA --zookeepers $ZOOKEEPER topics delete $TOPICS ; then
+  echo $0 succeeded
+else
+  echo $0 failed
+  exit 1
+fi

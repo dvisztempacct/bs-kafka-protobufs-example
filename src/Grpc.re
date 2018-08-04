@@ -2,6 +2,7 @@
 
 exception BsGrpcDecoderError(string);
 exception ImpossibleError(string);
+let (<<) = (f, g, x) => f(g(x));
 /** an opaque type for error objects from grpc-node when the client invokes
    an RPC */
 type grpcClientRpcInvokeError;
@@ -15,8 +16,7 @@ type serverCredentials;
 
 /* protobufjs uses ByteBuffer abstraction over Node Buffer */
 type byteBuffer;
-[@bs.send]
-external bufferOfByteBuffer : byteBuffer => Node.buffer = "toBuffer";
+[@bs.send] external bufferOfByteBuffer : byteBuffer => Node.buffer = "finish";
 
 /* flatMap an array of Futures */
 let futureFlatMapArray =
@@ -285,7 +285,8 @@ type uninstantiable;
 type justNull = Js.Nullable.t(uninstantiable);
 type grpcLoadResult;
 
-[@bs.module "grpc"] external grpcLoadProto : string => grpcLoadResult = "load";
+[@bs.module "bs-grpc"]
+external grpcLoadProto : string => grpcLoadResult = "load";
 
 /* Represents a grpc.Server object */
 type server;
@@ -307,15 +308,6 @@ module ServerKeyAndCert = {
 };
 /* fileName = "undefined" */
 /* moduleName = "*root*" */
-module Tin_extend = {
-  /* fileName = "extend.proto" */
-  /* moduleName = "Tin_extend" */
-
-  type grpcProtoHandle;
-  [@bs.get]
-  external getProtoHandle : grpcLoadResult => grpcProtoHandle = "tin_extend";
-  let myProtoHandle = grpcLoadProto("extend.proto") |> getProtoHandle;
-};
 module Assemblyline = {
   /* fileName = "assemblyline.proto" */
   /* moduleName = "Assemblyline" */
@@ -364,18 +356,22 @@ module Assemblyline = {
     let t = (~condition=?, ()) =>
       t(
         ~condition=?
-          condition |. Belt.Option.map(WidgetCondition.intOfWidgetCondition),
+          (Validation.optionMap @@ WidgetCondition.intOfWidgetCondition) @@
+          condition,
         (),
       );
-    let condition = x =>
-      x |. condition |. Belt.Option.map(WidgetCondition.widgetConditionOfInt);
+    /* enum converting getter */
+    let conditionGet =
+      Validation.optionMap @@
+      WidgetCondition.widgetConditionOfInt
+      << conditionGet;
     /* safe message constructor (may replace t()) */
     let make = (~condition=?, ()) => t(~condition?, ());
 
     /* sanitize, validate, normalize */
     let validate = x =>
       Future.make(resolve => {
-        let conditionRef = ref(x |. condition);
+        let conditionRef = ref(x |. conditionGet);
 
         let n = ref(1);
         let failed = ref(false);
@@ -424,25 +420,22 @@ module Assemblyline = {
           );
       });
 
-    [@bs.deriving abstract]
-    type codec = {
-      encode: (t, justNull, justNull) => byteBuffer,
-      decode: (Node.buffer, justNull, justNull) => t,
-    };
+    type codec;
+
+    [@bs.send]
+    external encode : (codec, t, justNull, justNull) => byteBuffer = "";
+    [@bs.send]
+    external decode : (codec, Node.buffer, justNull, justNull) => t = "";
 
     [@bs.get] external codec : grpcProtoHandle => codec = "BlankWidget";
 
     let codec = myProtoHandle |. codec;
 
-    let encode = codec |. encode;
-    let decode = codec |. decode;
-
     let encode = x =>
-      x
-      |. encode(Js.Nullable.undefined, Js.Nullable.undefined)
+      encode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined)
       |. bufferOfByteBuffer;
     let decode = x =>
-      x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+      decode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined);
   };
   module CutWidget = {
     /* fileName = "undefined" */
@@ -459,12 +452,16 @@ module Assemblyline = {
     let t = (~condition=?, ~numTeeth=?, ()) =>
       t(
         ~condition=?
-          condition |. Belt.Option.map(WidgetCondition.intOfWidgetCondition),
+          (Validation.optionMap @@ WidgetCondition.intOfWidgetCondition) @@
+          condition,
         ~numTeeth?,
         (),
       );
-    let condition = x =>
-      x |. condition |. Belt.Option.map(WidgetCondition.widgetConditionOfInt);
+    /* enum converting getter */
+    let conditionGet =
+      Validation.optionMap @@
+      WidgetCondition.widgetConditionOfInt
+      << conditionGet;
     /* safe message constructor (may replace t()) */
     let make = (~condition=?, ~numTeeth=?, ()) =>
       t(~condition?, ~numTeeth?, ());
@@ -472,8 +469,8 @@ module Assemblyline = {
     /* sanitize, validate, normalize */
     let validate = x =>
       Future.make(resolve => {
-        let conditionRef = ref(x |. condition);
-        let numTeethRef = ref(x |. numTeeth);
+        let conditionRef = ref(x |. conditionGet);
+        let numTeethRef = ref(x |. numTeethGet);
 
         let n = ref(2);
         let failed = ref(false);
@@ -528,25 +525,22 @@ module Assemblyline = {
         |. ignore;
       });
 
-    [@bs.deriving abstract]
-    type codec = {
-      encode: (t, justNull, justNull) => byteBuffer,
-      decode: (Node.buffer, justNull, justNull) => t,
-    };
+    type codec;
+
+    [@bs.send]
+    external encode : (codec, t, justNull, justNull) => byteBuffer = "";
+    [@bs.send]
+    external decode : (codec, Node.buffer, justNull, justNull) => t = "";
 
     [@bs.get] external codec : grpcProtoHandle => codec = "CutWidget";
 
     let codec = myProtoHandle |. codec;
 
-    let encode = codec |. encode;
-    let decode = codec |. decode;
-
     let encode = x =>
-      x
-      |. encode(Js.Nullable.undefined, Js.Nullable.undefined)
+      encode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined)
       |. bufferOfByteBuffer;
     let decode = x =>
-      x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+      decode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined);
   };
   module WidgetColor = {
     /* fileName = "undefined" */
@@ -595,15 +589,21 @@ module Assemblyline = {
     let t = (~condition=?, ~numTeeth=?, ~paintJob=?, ()) =>
       t(
         ~condition=?
-          condition |. Belt.Option.map(WidgetCondition.intOfWidgetCondition),
+          (Validation.optionMap @@ WidgetCondition.intOfWidgetCondition) @@
+          condition,
         ~numTeeth?,
-        ~paintJob=?paintJob |. Belt.Option.map(WidgetColor.intOfWidgetColor),
+        ~paintJob=?
+          (Validation.optionMap @@ WidgetColor.intOfWidgetColor) @@ paintJob,
         (),
       );
-    let condition = x =>
-      x |. condition |. Belt.Option.map(WidgetCondition.widgetConditionOfInt);
-    let paintJob = x =>
-      x |. paintJob |. Belt.Option.map(WidgetColor.widgetColorOfInt);
+    /* enum converting getter */
+    let conditionGet =
+      Validation.optionMap @@
+      WidgetCondition.widgetConditionOfInt
+      << conditionGet;
+    /* enum converting getter */
+    let paintJobGet =
+      Validation.optionMap @@ WidgetColor.widgetColorOfInt << paintJobGet;
     /* safe message constructor (may replace t()) */
     let make = (~condition=?, ~numTeeth=?, ~paintJob=?, ()) =>
       t(~condition?, ~numTeeth?, ~paintJob?, ());
@@ -611,9 +611,9 @@ module Assemblyline = {
     /* sanitize, validate, normalize */
     let validate = x =>
       Future.make(resolve => {
-        let conditionRef = ref(x |. condition);
-        let numTeethRef = ref(x |. numTeeth);
-        let paintJobRef = ref(x |. paintJob);
+        let conditionRef = ref(x |. conditionGet);
+        let numTeethRef = ref(x |. numTeethGet);
+        let paintJobRef = ref(x |. paintJobGet);
 
         let n = ref(3);
         let failed = ref(false);
@@ -680,25 +680,22 @@ module Assemblyline = {
         |. ignore;
       });
 
-    [@bs.deriving abstract]
-    type codec = {
-      encode: (t, justNull, justNull) => byteBuffer,
-      decode: (Node.buffer, justNull, justNull) => t,
-    };
+    type codec;
+
+    [@bs.send]
+    external encode : (codec, t, justNull, justNull) => byteBuffer = "";
+    [@bs.send]
+    external decode : (codec, Node.buffer, justNull, justNull) => t = "";
 
     [@bs.get] external codec : grpcProtoHandle => codec = "PaintedWidget";
 
     let codec = myProtoHandle |. codec;
 
-    let encode = codec |. encode;
-    let decode = codec |. decode;
-
     let encode = x =>
-      x
-      |. encode(Js.Nullable.undefined, Js.Nullable.undefined)
+      encode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined)
       |. bufferOfByteBuffer;
     let decode = x =>
-      x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+      decode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined);
   };
   module BoxOfWidgets = {
     /* fileName = "undefined" */
@@ -715,7 +712,7 @@ module Assemblyline = {
     /* sanitize, validate, normalize */
     let validate = x =>
       Future.make(resolve => {
-        let paintedWidgetsRef = ref(x |. paintedWidgets);
+        let paintedWidgetsRef = ref(x |. paintedWidgetsGet);
 
         let n = ref(1);
         let failed = ref(false);
@@ -766,25 +763,22 @@ module Assemblyline = {
           );
       });
 
-    [@bs.deriving abstract]
-    type codec = {
-      encode: (t, justNull, justNull) => byteBuffer,
-      decode: (Node.buffer, justNull, justNull) => t,
-    };
+    type codec;
+
+    [@bs.send]
+    external encode : (codec, t, justNull, justNull) => byteBuffer = "";
+    [@bs.send]
+    external decode : (codec, Node.buffer, justNull, justNull) => t = "";
 
     [@bs.get] external codec : grpcProtoHandle => codec = "BoxOfWidgets";
 
     let codec = myProtoHandle |. codec;
 
-    let encode = codec |. encode;
-    let decode = codec |. decode;
-
     let encode = x =>
-      x
-      |. encode(Js.Nullable.undefined, Js.Nullable.undefined)
+      encode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined)
       |. bufferOfByteBuffer;
     let decode = x =>
-      x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+      decode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined);
   };
 };
 
@@ -794,7 +788,7 @@ module Server = {
      * grpc.ServerCredentials
      */
     module Ssl = {
-      [@bs.module "grpc"] [@bs.scope "ServerCredentials"]
+      [@bs.module "bs-grpc"] [@bs.scope "ServerCredentials"]
       external make :
         (buffer, array(ServerKeyAndCert.t), bool) => serverCredentials =
         "createSsl";
@@ -806,12 +800,13 @@ module Server = {
         );
     };
     module Insecure = {
-      [@bs.module "grpc"] [@bs.scope "ServerCredentials"]
+      [@bs.module "bs-grpc"] [@bs.scope "ServerCredentials"]
       external make : unit => serverCredentials = "createInsecure";
     };
   };
 
-  [@bs.module "grpc"] [@bs.new] external newServer : unit => server = "Server";
+  [@bs.module "bs-grpc"] [@bs.new]
+  external newServer : unit => server = "Server";
 
   [@bs.send]
   external serverBind : (server, string, serverCredentials) => unit = "bind";
@@ -831,7 +826,7 @@ module Server = {
 module Client = {
   module Metadata = {
     type t;
-    [@bs.module "grpc"] [@bs.new] external make : unit => t = "Metadata";
+    [@bs.module "bs-grpc"] [@bs.new] external make : unit => t = "Metadata";
     [@bs.send] external set : (t, string, string) => unit = "";
     let set = (t, key, value) => {
       set(t, key, value);
@@ -850,7 +845,7 @@ module Client = {
          the call object reflecting the request payload (not available in this
          binding) while the second argument is a function your metadata generator
          function must invoke with either an exception or the resulting metadata */
-      [@bs.module "grpc"]
+      [@bs.module "bs-grpc"]
       [@bs.scope "credentials"]
       external make : generatorImplementation => callCredentials =
         "createFromMetadataGenerator";
@@ -858,18 +853,18 @@ module Client = {
   };
 
   module Credentials = {
-    [@bs.module "grpc"] [@bs.scope "credentials"]
+    [@bs.module "bs-grpc"] [@bs.scope "credentials"]
     external createInsecure : unit => channelCredentials = "";
 
-    [@bs.module "grpc"] [@bs.scope "credentials"]
+    [@bs.module "bs-grpc"] [@bs.scope "credentials"]
     external createSsl : (buffer, buffer, buffer) => channelCredentials = "";
 
-    [@bs.module "grpc"] [@bs.scope "credentials"]
+    [@bs.module "bs-grpc"] [@bs.scope "credentials"]
     external combine :
       (channelCredentials, callCredentials) => channelCredentials =
       "combineChannelCredentials";
 
-    [@bs.module "grpc"] [@bs.scope "credentials"]
+    [@bs.module "bs-grpc"] [@bs.scope "credentials"]
     external combine3 :
       (channelCredentials, callCredentials, callCredentials) =>
       channelCredentials =

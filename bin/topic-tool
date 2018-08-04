@@ -1,0 +1,95 @@
+#!/bin/bash
+# This tool will create topics expected by this microservice if they don't
+# already exist.
+# TODO is there an existing kafka tool to do this?
+
+MY_TOPICS='blank-widget
+cut-widget
+painted-widget
+box-of-widget'
+
+echo this tool will create or delete topics for your service automatically,
+echo however please keep in mind that if you have specific replication and/or
+echo partitioning requirements, you should create these topics yourself, as
+echo this tool creates the minimal possible topics.
+
+# We accept -d and -c options
+case "$1" in
+-c) MY_MODE='create' ;;
+-d) MY_MODE='delete' ;;
+*) echo -e "\nusage: $0 [-c | -d]" ; exit 2 ;;
+esac
+
+MY_DIR="$(dirname $0)"
+CONFIG_GET_CMD="$MY_DIR/config-get"
+
+# MacOS grep is buggy, we need GNU grep. check for presence of grep bug
+POSSIBLE_GREPS="grep ggrep NOMORE"
+for GREP in $POSSIBLE_GREPS ; do
+  if [ "$GREP" = NOMORE ] ; then
+    echo error: could not find a usable grep. if you are on macos, please
+    echo install GNU grep. it can be installed easily with homebrew without
+    echo affecting your existing grep:
+    echo brew install grep
+    exit 1
+  fi
+  GREP=$(which $GREP)
+  if [ -z "$GREP" ] ; then
+    continue
+  fi
+  if echo "i should make it past GNU grep" | $GREP -xvF '' > /dev/null 2> /dev/null ; then
+    echo using grep at $GREP
+    break
+  fi
+done
+
+TOPICS_CMD="$(which kafka-topics)"
+
+if [ -a "$TOPICS_CMD" ] ; then
+  echo using kafka-topics at $TOPICS_CMD
+else
+  echo error: cannot find kafka-topics command on PATH
+  exit 1
+fi
+
+
+# get zookeeper from configuration
+if [ -a "$CONFIG_GET_CMD" ] ; then
+  ZOOKEEPER_HOST="$($CONFIG_GET_CMD KAFKA:ZOOKEEPER:ZOOKEEPER_HOST)"
+  if [ 0 != $? ] ; then
+    echo cannot find KAFKA:ZOOKEEPER:ZOOKEEPER_HOST configuration key
+    exit 1
+  fi
+  ZOOKEEPER_PORT="$($CONFIG_GET_CMD KAFKA:ZOOKEEPER:ZOOKEEPER_PORT)"
+  if [ 0 != $? ] ; then
+    echo cannot find KAFKA:ZOOKEEPER:ZOOKEEPER_PORT configuration key
+    exit 1
+  fi
+  ZOOKEEPER="$ZOOKEEPER_HOST:$ZOOKEEPER_PORT"
+else
+  # if we can't get config, we have to fall back on environment variables
+  if [ -z "$ZOOKEEPER" ] ; then
+    echo error: no config-get program at $CONFIG_GET_CMD and no ZOOKEEPER
+    echo environment variable set. please supply one or the other.
+    exit 1
+  fi
+fi
+
+echo using ZOOKEEPER=$ZOOKEEPER
+
+case "$1" in
+-c)
+  echo "$MY_TOPICS" | $GREP -xvF "$("$TOPICS_CMD" --zookeeper "$ZOOKEEPER" --list | $GREP -F "$MY_TOPICS")" \
+    | xargs -L 1 $TOPICS_CMD --zookeeper "$ZOOKEEPER" --replication-factor 1 --partitions 1 --create --topic \
+    || exit 3
+  ;;
+-d)
+  "$TOPICS_CMD" --zookeeper "$ZOOKEEPER" --list | $GREP -F "$MY_TOPICS" \
+    | xargs -L 1 $TOPICS_CMD --zookeeper "$ZOOKEEPER" --delete --topic \
+    || exit 3
+  ;;
+esac
+
+echo
+echo 'done! check my work with:'
+echo \"$TOPICS_CMD\" --zookeeper \"$ZOOKEEPER\" --list

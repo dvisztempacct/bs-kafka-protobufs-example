@@ -19,8 +19,8 @@ module Consumer = {
       let buffer = receipt |. K.Consumer.bufferValue;
       let cutWidget = buffer |. CutWidget.decode;
       cutWidget |. Util.cutWidgetToString |> Js.log2("rx:");
-      let condition = cutWidget |. CutWidget.condition |. Belt.Option.getExn;
-      let numTeeth = cutWidget |. CutWidget.numTeeth |. Belt.Option.getExn;
+      let condition = cutWidget |. CutWidget.conditionGet |. Belt.Option.getExn;
+      let numTeeth = cutWidget |. CutWidget.numTeethGet |. Belt.Option.getExn;
 
       Js.log("painting widget...");
       condition

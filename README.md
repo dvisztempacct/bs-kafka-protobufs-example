@@ -13,6 +13,7 @@ export ZOOKEEPER=10.101.0.1:20406
 PATH="$HOME/go/bin:$PATH"
 
 yarn # install depednencies
+yarn build:grpc # build src/Grpc.re from .proto file
 yarn build # build
 yarn setup # create kafka topics for our widget factory
 yarn start # start WidgetCutter and WidgetPainter services

@@ -28,7 +28,7 @@ module Consumer = {
 
       /* Access message fields */
       let widgetCondition =
-        blankWidget |. BlankWidget.condition |. Belt.Option.getExn;
+        blankWidget |. BlankWidget.conditionGet |. Belt.Option.getExn;
 
       /* Some logs */
       Js.log("cutting widget...");

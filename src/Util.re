@@ -45,7 +45,7 @@ let widgetColorToString =
 
 let blankWidgetToString = blankWidget =>
   "<Blank Widget condition="
-  ++ (blankWidget |. BlankWidget.condition |. widgetConditionToString)
+  ++ (blankWidget |. BlankWidget.conditionGet |. widgetConditionToString)
   ++ ">";
 
 let numTeethToString =
@@ -55,16 +55,16 @@ let numTeethToString =
 
 let cutWidgetToString = cutWidget =>
   "<Cut Widget condition="
-  ++ (cutWidget |. CutWidget.condition |. widgetConditionToString)
+  ++ (cutWidget |. CutWidget.conditionGet |. widgetConditionToString)
   ++ " numTeeth="
-  ++ (cutWidget |. CutWidget.numTeeth |. numTeethToString)
+  ++ (cutWidget |. CutWidget.numTeethGet |. numTeethToString)
   ++ ">";
 
 let paintedWidgetToString = paintedWidget =>
   "<Painted Widget condition="
-  ++ (paintedWidget |. PaintedWidget.condition |. widgetConditionToString)
+  ++ (paintedWidget |. PaintedWidget.conditionGet |. widgetConditionToString)
   ++ " numTeeth="
-  ++ (paintedWidget |. PaintedWidget.numTeeth |. numTeethToString)
+  ++ (paintedWidget |. PaintedWidget.numTeethGet |. numTeethToString)
   ++ " paintJob="
-  ++ (paintedWidget |. PaintedWidget.paintJob |. widgetColorToString)
+  ++ (paintedWidget |. PaintedWidget.paintJobGet |. widgetColorToString)
   ++ ">";

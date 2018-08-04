@@ -1,7 +1,7 @@
 syntax = "proto3";
 package assemblyline;
-/* obtain tin_validation_* custom options */
-import "extend.proto";
+/* obtain tin.validation_* custom options */
+import "tin.proto";
 
 enum WidgetCondition {
   WIDGET_CONDITION_ADEQUATE = 0;
@@ -16,28 +16,28 @@ enum WidgetColor {
 
 message BlankWidget {
   WidgetCondition condition = 1 [
-    (tin_extend.tin_field_validation) = "required"
+    (tin.field_validation) = "required"
   ];
 }
 
 message CutWidget {
   WidgetCondition condition = 1 [
-    (tin_extend.tin_field_validation) = "required"
+    (tin.field_validation) = "required"
   ];
   int32 numTeeth = 2 [
-    (tin_extend.tin_field_validation) = "required |> numberRange(32, 63)"
+    (tin.field_validation) = "required |> numberRange(32, 63)"
   ];
 }
 
 message PaintedWidget {
   WidgetCondition condition = 1[
-    (tin_extend.tin_field_validation) = "required"
+    (tin.field_validation) = "required"
   ];
   int32 numTeeth = 2[
-    (tin_extend.tin_field_validation) = "required |> numberRange(32, 63)"
+    (tin.field_validation) = "required |> numberRange(32, 63)"
   ];
   WidgetColor paintJob = 3[
-    (tin_extend.tin_field_validation) = "required"
+    (tin.field_validation) = "required"
   ];
 }
 
